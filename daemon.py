@@ -129,9 +129,16 @@ class Daemon(object):
             pid = None
 
         if pid:
-            message = "pidfile %s already exists. Is it already running?\n"
-            sys.stderr.write(message % self.pidfile)
-            sys.exit(1)
+            try:
+                os.kill(int(pid), 0)
+            except OSError:
+                message = "pidfile %s exists. Remove pidfile of an old process: %d"
+                sys.stderr.write(message % (self.pidfile, pid))
+                os.remove(lockfile)
+            else:
+                message = "pidfile %s exists. Already have a process running: %d\n"
+                sys.stderr.write(message % (self.pidfile, pid))
+                sys.exit(1)
 
         # Start the daemon
         self.daemonize()
